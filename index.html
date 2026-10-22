@@ -100,6 +100,47 @@
     .tlabel{font-size:10px;padding-right:6px}
     .cell{height:30px;font-size:11px}
   }
+
+  /* ---------- block picker (tap Lunch / Dinner, drag the edges) ---------- */
+  .legendline{margin:10px 0 12px;font-size:12.5px;color:var(--dim2);line-height:1.5}
+  .legendline b{color:#ffc79a}
+  .pickcards{display:flex;flex-direction:column;gap:10px;transition:opacity .15s}
+  .pickcards.locked{opacity:.5}
+  .pickcards.locked .bar{cursor:not-allowed}
+  .daycard{background:#0f1a2e;border:1px solid var(--line2);border-radius:12px;padding:10px 12px 6px}
+  .daycard.holiday{border-color:rgba(255,138,61,.42);background:linear-gradient(180deg,rgba(255,138,61,.09),rgba(15,26,46,0) 72%)}
+  .daytop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+  .dayname{font-size:13px;font-weight:800;color:#dbe5f8;display:flex;align-items:center;gap:7px}
+  .dayname em{font-style:normal;color:#ffb173;font-weight:800;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase}
+  .daysum{font-size:11px;font-weight:700;color:var(--dim2);white-space:nowrap}
+  .daysum.on{color:#7ce7bb}
+  .track{position:relative;height:52px;border-radius:10px;background-color:#131f34;box-shadow:inset 0 0 0 1px #1d2942;
+         background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 1px,transparent 1px 6.6667%);
+         touch-action:pan-y;overflow:hidden}
+  .bar{position:absolute;top:6px;bottom:6px;border-radius:8px;display:flex;flex-direction:column;
+       align-items:center;justify-content:center;line-height:1.1;
+       background:rgba(255,138,61,.12);border:1.5px dashed rgba(255,138,61,.45);color:#ffc79a;
+       font-size:11px;font-weight:800;cursor:pointer;user-select:none;-webkit-user-select:none;
+       -webkit-tap-highlight-color:transparent;overflow:hidden;padding:0 13px;
+       transition:background .12s,border-color .12s,box-shadow .12s}
+  .bar.on{background:linear-gradient(180deg,#ffa45c,#f9762b);border-style:solid;border-color:#ffb173;color:#2a1500}
+  .bar b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;font-size:10.5px}
+  .bar i{font-style:normal;font-weight:700;font-size:9.5px;opacity:.82;white-space:nowrap;max-width:100%}
+  .bar .grip{position:absolute;top:0;bottom:0;width:13px;cursor:ew-resize;touch-action:none;
+             display:flex;align-items:center;justify-content:center}
+  .bar .grip.l{left:0}.bar .grip.r{right:0}
+  .bar .grip::after{content:'';width:2px;height:18px;border-radius:2px;background:currentColor;opacity:.45}
+  .bar.on .grip::after{background:#2a1500;opacity:.55}
+  .bar.dragging{box-shadow:0 0 0 2px var(--sky);z-index:4}
+  .axis{position:relative;height:15px;margin-top:7px}
+  .axis span{position:absolute;top:0;font-size:9.5px;font-weight:600;color:var(--dim2);transform:translateX(-50%);white-space:nowrap}
+  .axis span:first-child{transform:none}
+  @media (min-width:700px){
+    .track{height:46px}
+    .bar b{font-size:11.5px}
+    .bar i{font-size:10px}
+    .bar .grip{width:15px}
+  }
   .cell:hover{background:#22304e}
   .cell.sel{background:linear-gradient(180deg,#ffa45c,#f9762b);border-color:#ffb173;color:#2a1500}
   .cell.sel:hover{background:linear-gradient(180deg,#ffb072,#ff8340)}
@@ -169,8 +210,8 @@
   .tag{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px}
   .tag.in{background:rgba(55,211,153,.14);color:#7ce7bb;border:1px solid rgba(55,211,153,.3)}
   .tag.out{background:rgba(255,93,93,.12);color:#ff9a9a;border:1px solid rgba(255,93,93,.3)}
-  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-  .bar .status{font-size:12px;color:var(--dim2);flex:1;min-width:140px}
+  .statusbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .statusbar .status{font-size:12px;color:var(--dim2);flex:1;min-width:140px}
 
   .chk{display:flex;gap:9px;align-items:center;font-size:13.5px;color:var(--dim);margin-top:14px;cursor:pointer}
   .chk input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
@@ -208,12 +249,11 @@
         <p class="msg" id="nameMsg"></p>
 
         <h2 style="margin-top:22px">2. When are you free?</h2>
-        <p class="hint">Tap the hours you're available — tap again to remove. Pick as many blocks as you like.</p>
+        <p class="hint">Tap a block to say you're free then — tap again to remove it.</p>
 
         <div class="lockbanner" id="lockBanner">🔒 Enter your name above to unlock the time blocks.</div>
-        <div class="gridwrap">
-          <div class="grid locked" id="pickGrid"></div>
-        </div>
+        <p class="legendline">Every day starts with <b>Lunch</b> (11–3) and <b>Dinner</b> (5–9). If your hours differ, drag the left or right edge of the block to widen or narrow it.</p>
+        <div class="pickcards locked" id="pickCards"></div>
 
         <label class="chk"><input type="checkbox" id="cantMake" /> I can't make any of these times</label>
 
@@ -235,7 +275,7 @@
       </div>
 
       <div class="card">
-        <div class="bar">
+        <div class="statusbar">
           <div class="status" id="statusLine">Loading…</div>
           <button class="btn small" id="refreshBtn">Refresh</button>
         </div>
@@ -302,6 +342,13 @@ const Core = (() => {
   };
   const isSlotKey = (k) => typeof k === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}$/.test(k);
   const normName = (n) => String(n || '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+  // The preset windows people tap. Lunch and dinner, 4 hours each.
+  const PRESETS = [
+    { key: 'lunch', label: 'Lunch', start: 11, end: 15 },
+    { key: 'dinner', label: 'Dinner', start: 17, end: 21 }
+  ];
+  const SPAN = EVENT.endHour - EVENT.startHour;
 
   function fmtHour(h) {
     const hh = h % 12 === 0 ? 12 : h % 12;
@@ -418,11 +465,100 @@ const Core = (() => {
     return { n, everyone, near, total: everyone.reduce((a, w) => a + w.len, 0) };
   }
 
+  function fmtHourTiny(h) {
+    const hh = h % 12 === 0 ? 12 : h % 12;
+    return hh + (h < 12 ? 'a' : 'p');
+  }
+
+  /* ---------- block model (Lunch / Dinner per day) ---------- */
+
+  /** { "YYYY-MM-DD|lunch": {start, end, on}, ... } with every day/preset present. */
+  function defaultBlocks() {
+    const m = {};
+    for (const d of EVENT.days) {
+      for (const p of PRESETS) m[d + '|' + p.key] = { start: p.start, end: p.end, on: false };
+    }
+    return m;
+  }
+
+  /** Flatten switched-on blocks into the hourly slots the backend and ranking use. */
+  function slotsFromBlocks(blocks) {
+    const out = [];
+    for (const k in blocks) {
+      const b = blocks[k];
+      if (!b || !b.on) continue;
+      const day = k.slice(0, 10);
+      const s = Math.max(EVENT.startHour, b.start);
+      const e = Math.min(EVENT.endHour, b.end);
+      for (let h = s; h < e; h++) out.push(slotKey(day, h));
+    }
+    return out.sort();
+  }
+
+  /** Apply a saved [{day,slot,start,end}] list onto a fresh default block map. */
+  function hydrateBlocks(list) {
+    const m = defaultBlocks();
+    if (Array.isArray(list)) {
+      for (const b of list) {
+        if (!b || !b.day || !b.slot) continue;
+        const k = b.day + '|' + b.slot;
+        if (!m[k]) continue;
+        const s = Math.max(EVENT.startHour, Math.min(EVENT.endHour - 1, Math.round(+b.start)));
+        const e = Math.max(s + 1, Math.min(EVENT.endHour, Math.round(+b.end)));
+        m[k] = { start: s, end: e, on: true };
+      }
+    }
+    return m;
+  }
+
+  /** Rebuild blocks from raw hourly slots (answers saved before blocks existed). */
+  function blocksFromSlots(slotList) {
+    const m = defaultBlocks();
+    const boundary = Math.round((PRESETS[0].end + PRESETS[1].start) / 2);   // 4 PM splits lunch from dinner
+    for (const day of EVENT.days) {
+      const hs = [];
+      for (const s of (slotList || [])) {
+        if (!isSlotKey(s) || s.slice(0, 10) !== day) continue;
+        hs.push(Number(s.slice(11, 13)));
+      }
+      if (!hs.length) continue;
+      const lo = hs.filter((h) => h < boundary).sort((a, b) => a - b);
+      const hi = hs.filter((h) => h >= boundary).sort((a, b) => a - b);
+      if (lo.length) m[day + '|lunch'] = { start: lo[0], end: lo[lo.length - 1] + 1, on: true };
+      if (hi.length) m[day + '|dinner'] = { start: hi[0], end: hi[hi.length - 1] + 1, on: true };
+      const L = m[day + '|lunch'], D = m[day + '|dinner'];
+      if (L.on && D.on && L.end > D.start) L.end = Math.max(L.start + 1, D.start);
+    }
+    return m;
+  }
+
+  /** Move one edge of a block, keeping lunch left of dinner and >= 1 hour wide. */
+  function resizeBlock(blocks, day, slot, edge, hour) {
+    const L = blocks[day + '|lunch'];
+    const D = blocks[day + '|dinner'];
+    const b = blocks[day + '|' + slot];
+    if (!b) return;
+    const h = Math.round(hour);
+    if (slot === 'lunch') {
+      if (edge === 'l') b.start = Math.max(EVENT.startHour, Math.min(h, b.end - 1));
+      else b.end = Math.min(Math.max(h, b.start + 1), D.start);
+    } else {
+      if (edge === 'l') b.start = Math.max(L.end, Math.min(h, b.end - 1));
+      else b.end = Math.min(Math.max(h, b.start + 1), EVENT.endHour);
+    }
+  }
+
+  function hourFromRatio(frac) {
+    return Math.max(EVENT.startHour, Math.min(EVENT.endHour,
+      Math.round(EVENT.startHour + Math.max(0, Math.min(1, frac)) * SPAN)));
+  }
+
   return {
-    EVENT, hours, slotKey, allSlots, isSlotKey, normName,
-    fmtHour, fmtDay, fmtDaySplit, fmtRange, dur,
+    EVENT, hours, slotKey, allSlots, isSlotKey, normName, PRESETS, SPAN,
+    fmtHour, fmtHourTiny, fmtDay, fmtDaySplit, fmtRange, dur,
     rangesOf, rangesText, coverageMap, attendingOf,
-    freeFor, missingFor, rankWindows, windowCovers
+    freeFor, missingFor, rankWindows, windowCovers,
+    defaultBlocks, slotsFromBlocks, hydrateBlocks, blocksFromSlots, resizeBlock, hourFromRatio
   };
 })();
 globalThis.Core = Core;
@@ -438,8 +574,10 @@ function initUI() {
 
   const state = {
     name: '',
+    blocks: Core.defaultBlocks(),
     selected: new Set(),
     cantMake: false,
+    confirmSingle: false,
     people: [],
     loading: false,
     error: '',
@@ -479,17 +617,21 @@ function initUI() {
   function saveLocal() {
     try {
       localStorage.setItem(LS + '.name', state.name);
-      localStorage.setItem(LS + '.slots', JSON.stringify(Array.from(state.selected)));
+      localStorage.setItem(LS + '.blocks', JSON.stringify(currentOnBlocks()));
       localStorage.setItem(LS + '.cantMake', state.cantMake ? '1' : '0');
     } catch (e) { /* private mode — ignore */ }
   }
   function loadLocal() {
     try {
       state.name = localStorage.getItem(LS + '.name') || '';
-      const raw = localStorage.getItem(LS + '.slots');
-      if (raw) { const a = JSON.parse(raw); if (Array.isArray(a)) a.filter(Core.isSlotKey).forEach((s) => state.selected.add(s)); }
+      const raw = localStorage.getItem(LS + '.blocks');
+      if (raw) {
+        const a = JSON.parse(raw);
+        if (Array.isArray(a) && a.length) state.blocks = Core.hydrateBlocks(a);
+      }
       state.cantMake = localStorage.getItem(LS + '.cantMake') === '1';
     } catch (e) { /* ignore */ }
+    syncSlots();
   }
 
   /* ---------- name validation ---------- */
@@ -517,8 +659,7 @@ function initUI() {
 
   function syncLockUI() {
     const ok = nameOk();
-    const grid = $('pickGrid');
-    grid.classList.toggle('locked', !ok);
+    $('pickCards').classList.toggle('locked', !ok);
     $('lockBanner').classList.toggle('hide', ok);
     if (ok) {
       const input = $('nameInput');
@@ -527,112 +668,226 @@ function initUI() {
     }
   }
 
-  /* ---------- pick grid ---------- */
-  let dragMode = null;   // true -> adding, false -> removing, null -> idle
-  let dragged = false;
+  /* ---------- block picker (Lunch / Dinner) ---------- */
+  const SPAN = Core.SPAN;
+  const bkey = (day, slot) => day + '|' + slot;
+  let drag = null;
 
-  function paintCell(cell) {
-    const on = state.selected.has(cell.dataset.slot);
-    cell.classList.toggle('sel', on);
-    cell.setAttribute('aria-pressed', on ? 'true' : 'false');
-    cell.title = on ? 'Selected — tap to remove' : 'Tap to select';
-  }
-
-  function buildPickGrid() {
-    const grid = $('pickGrid');
-    grid.textContent = '';
-    grid.appendChild(el('div', { class: 'dhead' }));      // corner
-    for (const d of E.days) {
-      const p = Core.fmtDaySplit(d);
-      grid.appendChild(el('div', { class: 'dhead' + (d === E.holiday ? ' holiday' : '') },
-        el('b', { text: p.dow }), el('span', { text: p.md })));
-    }
-    for (const h of Core.hours) {
-      grid.appendChild(el('div', { class: 'tlabel', text: Core.fmtHour(h) }));
-      for (const d of E.days) {
-        const c = el('div', { class: 'cell', tabindex: '0', role: 'button' });
-        c.dataset.slot = Core.slotKey(d, h);
-        c.dataset.day = d;
-        c.dataset.hour = String(h);
-        paintCell(c);
-        grid.appendChild(c);
+  function currentOnBlocks() {
+    const out = [];
+    for (const day of E.days) {
+      for (const p of Core.PRESETS) {
+        const b = state.blocks[bkey(day, p.key)];
+        if (b && b.on) out.push({ day, slot: p.key, start: b.start, end: b.end });
       }
     }
+    return out;
   }
 
-  function toggleCell(cell, mode) {
-    const k = cell.dataset.slot;
-    if (!k) return;
-    if (mode === true) state.selected.add(k);
-    else if (mode === false) state.selected.delete(k);
-    else state.selected.has(k) ? state.selected.delete(k) : state.selected.add(k);
+  function syncSlots() {
+    state.selected = new Set(Core.slotsFromBlocks(state.blocks));
     if (state.selected.size) state.cantMake = false;
-    paintCell(cell);
+  }
+
+  function countHours(day) {
+    let n = 0;
+    for (const p of Core.PRESETS) {
+      const b = state.blocks[bkey(day, p.key)];
+      if (b && b.on) n += b.end - b.start;
+    }
+    return n;
+  }
+
+  function clearBlocks() {
+    for (const k in state.blocks) state.blocks[k].on = false;
+    syncSlots();
     saveLocal();
+    renderPicker();
   }
 
-  function cellUnder(x, y) {
-    const n = document.elementFromPoint(x, y);
-    return n && n.classList && n.classList.contains('cell') ? n : null;
+  function resetSaveWarning() {
+    state.confirmSingle = false;
+    const btn = $('saveBtn');
+    if (btn && btn.dataset.warn === '1') { btn.textContent = 'Save my availability'; btn.dataset.warn = '0'; }
   }
 
-  function bindGrid() {
-    const grid = $('pickGrid');
+  function barStyle(b) {
+    const l = ((b.start - E.startHour) / SPAN * 100).toFixed(4);
+    const w = ((b.end - b.start) / SPAN * 100).toFixed(4);
+    return 'left:calc(' + l + '% + 1px);width:calc(' + w + '% - 2px)';
+  }
 
-    grid.addEventListener('pointerdown', (ev) => {
-      const cell = ev.target.closest ? ev.target.closest('.cell') : null;
-      if (!cell) return;
-      if (!nameOk()) { ev.preventDefault(); nudgeName(); return; }   // <-- gate
+  function renderPicker() {
+    const wrap = $('pickCards');
+    wrap.classList.toggle('locked', !nameOk());
+    wrap.textContent = '';
+    for (const day of E.days) {
+      const dd = Core.fmtDaySplit(day);
+      const hrs = countHours(day);
+      const card = el('div', { class: 'daycard' + (day === E.holiday ? ' holiday' : '') });
+
+      const nameEl = el('div', { class: 'dayname' }, dd.dow + ' ' + dd.md);
+      if (day === E.holiday) nameEl.appendChild(el('em', { text: 'thanksgiving' }));
+      card.appendChild(el('div', { class: 'daytop' }, nameEl,
+        el('div', { class: 'daysum' + (hrs ? ' on' : ''), text: hrs ? hrs + ' hrs picked' : 'not picked' })));
+
+      const track = el('div', { class: 'track' });
+      track.dataset.day = day;
+      for (const p of Core.PRESETS) {
+        const b = state.blocks[bkey(day, p.key)];
+        const bar = el('div', {
+          class: 'bar' + (b.on ? ' on' : ''),
+          role: 'button',
+          tabindex: '0',
+          'aria-pressed': b.on ? 'true' : 'false',
+          'aria-label': p.label + ' ' + Core.fmtHour(b.start) + ' to ' + Core.fmtHour(b.end) + (b.on ? ', selected' : ', not selected'),
+          style: barStyle(b)
+        });
+        bar.dataset.day = day;
+        bar.dataset.slot = p.key;
+        bar.appendChild(el('span', { class: 'grip l' }));
+        bar.appendChild(el('b', { text: p.label }));
+        bar.appendChild(el('i', { text: Core.fmtHourTiny(b.start) + '–' + Core.fmtHourTiny(b.end) }));
+        bar.appendChild(el('span', { class: 'grip r' }));
+        track.appendChild(bar);
+      }
+      card.appendChild(track);
+
+      const axis = el('div', { class: 'axis' });
+      for (const h of [8, 11, 14, 17, 20, 22]) {
+        axis.appendChild(el('span', { style: 'left:' + ((h - E.startHour) / SPAN * 100) + '%', text: Core.fmtHour(h) }));
+      }
+      card.appendChild(axis);
+      wrap.appendChild(card);
+    }
+  }
+
+  function paintBar(bar, day, slot) {
+    const b = state.blocks[bkey(day, slot)];
+    const preset = Core.PRESETS.find((p) => p.key === slot);
+    bar.classList.toggle('on', b.on);
+    bar.setAttribute('aria-pressed', b.on ? 'true' : 'false');
+    bar.setAttribute('aria-label', preset.label + ' ' + Core.fmtHour(b.start) + ' to ' + Core.fmtHour(b.end) + (b.on ? ', selected' : ', not selected'));
+    bar.style.left = 'calc(' + ((b.start - E.startHour) / SPAN * 100).toFixed(4) + '% + 1px)';
+    bar.style.width = 'calc(' + ((b.end - b.start) / SPAN * 100).toFixed(4) + '% - 2px)';
+    const lbl = bar.querySelector('i');
+    if (lbl) lbl.textContent = Core.fmtHourTiny(b.start) + '–' + Core.fmtHourTiny(b.end);
+    const card = bar.closest('.daycard');
+    if (card) {
+      const hrs = countHours(day);
+      const sum = card.querySelector('.daysum');
+      if (sum) { sum.textContent = hrs ? hrs + ' hrs picked' : 'not picked'; sum.classList.toggle('on', !!hrs); }
+    }
+  }
+
+  function toggleBlock(day, slot) {
+    const b = state.blocks[bkey(day, slot)];
+    b.on = !b.on;
+    syncSlots();
+    saveLocal();
+    resetSaveWarning();
+    const bar = $('pickCards').querySelector('.bar[data-day="' + day + '"][data-slot="' + slot + '"]');
+    if (bar) paintBar(bar, day, slot);
+    $('saveMsg').className = 'msg';
+    $('saveMsg').textContent = '';
+  }
+
+  function bindPicker() {
+    const wrap = $('pickCards');
+
+    wrap.addEventListener('pointerdown', (ev) => {
+      const bar = ev.target.closest ? ev.target.closest('.bar') : null;
+      if (!bar) return;
+      if (!nameOk()) { ev.preventDefault(); nudgeName(); return; }        // <-- name gate
+      const grip = ev.target.closest('.grip');
+      if (!grip) return;                                                   // plain taps handled on click
       ev.preventDefault();
-      dragged = false;
-      dragMode = !state.selected.has(cell.dataset.slot);
-      toggleCell(cell, dragMode);
-      try { grid.setPointerCapture(ev.pointerId); } catch (e) {}
+      ev.stopPropagation();
+      drag = {
+        bar, track: bar.parentElement,
+        day: bar.dataset.day, slot: bar.dataset.slot,
+        edge: grip.classList.contains('l') ? 'l' : 'r',
+        moved: false
+      };
+      state.blocks[bkey(drag.day, drag.slot)].on = true;                   // grabbing an edge opts you in
+      bar.classList.add('dragging', 'on');
+      try { grip.setPointerCapture(ev.pointerId); } catch (e) {}
     });
 
-    grid.addEventListener('pointermove', (ev) => {
-      if (dragMode === null) return;
-      dragged = true;
-      const cell = cellUnder(ev.clientX, ev.clientY);
-      if (!cell) return;
-      const has = state.selected.has(cell.dataset.slot);
-      if (dragMode === true && !has) toggleCell(cell, true);
-      if (dragMode === false && has) toggleCell(cell, false);
+    window.addEventListener('pointermove', (ev) => {
+      if (!drag) return;
+      drag.moved = true;
+      const rect = drag.track.getBoundingClientRect();
+      const hour = Core.hourFromRatio((ev.clientX - rect.left) / rect.width);
+      Core.resizeBlock(state.blocks, drag.day, drag.slot, drag.edge, hour);
+      syncSlots();
+      paintBar(drag.bar, drag.day, drag.slot);
+      if (drag.slot === 'lunch') {
+        const other = wrap.querySelector('.bar[data-day="' + drag.day + '"][data-slot="dinner"]');
+        if (other) paintBar(other, drag.day, 'dinner');
+      } else {
+        const other = wrap.querySelector('.bar[data-day="' + drag.day + '"][data-slot="lunch"]');
+        if (other) paintBar(other, drag.day, 'lunch');
+      }
     });
 
-    const end = () => { dragMode = null; };
-    grid.addEventListener('pointerup', end);
-    grid.addEventListener('pointercancel', end);
+    const end = () => {
+      if (!drag) return;
+      drag.bar.classList.remove('dragging');
+      drag = null;
+      syncSlots();
+      saveLocal();
+      resetSaveWarning();
+    };
     window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
 
-    // keyboard access
-    grid.addEventListener('keydown', (ev) => {
-      const cell = ev.target.closest ? ev.target.closest('.cell') : null;
-      if (!cell) return;
+    wrap.addEventListener('click', (ev) => {
+      const bar = ev.target.closest ? ev.target.closest('.bar') : null;
+      if (!bar) return;
+      if (ev.target.closest('.grip')) return;
+      if (!nameOk()) { nudgeName(); return; }
+      toggleBlock(bar.dataset.day, bar.dataset.slot);
+    });
+
+    wrap.addEventListener('keydown', (ev) => {
+      const bar = ev.target.closest ? ev.target.closest('.bar') : null;
+      if (!bar) return;
       if (ev.key === ' ' || ev.key === 'Enter') {
         ev.preventDefault();
         if (!nameOk()) { nudgeName(); return; }
-        toggleCell(cell, null);
+        toggleBlock(bar.dataset.day, bar.dataset.slot);
       }
     });
-
-    // block context menu long-press oddities on mobile
-    grid.addEventListener('contextmenu', (ev) => { if (ev.target.closest('.cell')) ev.preventDefault(); });
   }
 
   /* ---------- saving ---------- */
   async function save() {
     const problem = nameProblem();
     if (problem) { nudgeName(problem); $('saveMsg').className = 'msg error'; $('saveMsg').textContent = problem; return; }
-    if (!state.cantMake && state.selected.size === 0) {
+
+    syncSlots();
+    const onBlocks = state.cantMake ? [] : currentOnBlocks();
+
+    if (!state.cantMake && onBlocks.length === 0) {
       $('saveMsg').className = 'msg error';
-      $('saveMsg').textContent = 'Pick at least one time block, or tick "I can\'t make any of these times".';
+      $('saveMsg').textContent = 'Tap at least one Lunch or Dinner block, or tick "I can\'t make any of these times".';
+      return;
+    }
+
+    // Nudge people who picked a single block: matching is much easier with more.
+    if (!state.cantMake && onBlocks.length === 1 && !state.confirmSingle) {
+      state.confirmSingle = true;
+      const btn0 = $('saveBtn');
+      btn0.dataset.warn = '1';
+      btn0.textContent = 'Save anyway';
+      $('saveMsg').className = 'msg warn';
+      $('saveMsg').textContent = 'Only one time block picked. It is much easier to find a time that works for everyone when people pick as many blocks as they could possibly do — even the days you are only maybe free. Tap "Save anyway" to submit just this one.';
       return;
     }
 
     const btn = $('saveBtn');
     btn.disabled = true;
-    const oldLabel = btn.textContent;
     btn.textContent = 'Saving…';
     $('saveMsg').className = 'msg';
     $('saveMsg').textContent = '';
@@ -644,7 +899,8 @@ function initUI() {
         body: JSON.stringify({
           name: state.name.trim(),
           attending: !state.cantMake,
-          slots: state.cantMake ? [] : Array.from(state.selected).sort()
+          slots: state.cantMake ? [] : Array.from(state.selected).sort(),
+          blocks: onBlocks
         })
       });
       const data = await res.json().catch(() => ({}));
@@ -655,6 +911,7 @@ function initUI() {
       $('saveMsg').className = 'msg ok';
       $('saveMsg').textContent = 'Saved — thanks, ' + data.person.name + '!';
       showToast('Saved — thanks, ' + data.person.name + '!');
+      state.confirmSingle = false;
       await refresh(true);
       showTab('results');
     } catch (err) {
@@ -663,7 +920,9 @@ function initUI() {
         '. Your picks are kept in this browser — try again.';
     } finally {
       btn.disabled = false;
-      btn.textContent = oldLabel;
+      btn.dataset.warn = '0';
+      btn.textContent = 'Save my availability';
+      state.confirmSingle = false;
     }
   }
 
@@ -723,22 +982,24 @@ function initUI() {
   function maybeRestorePicks() {
     if (restored) return;
     const mine = state.people.find((p) => Core.normName(p.name) === Core.normName(state.name));
-    if (mine && state.selected.size === 0 && !state.cantMake) {
-      if (mine.attending === false) state.cantMake = true;
-      else (mine.slots || []).filter(Core.isSlotKey).forEach((s) => state.selected.add(s));
-      if (state.cantMake || state.selected.size) {
-        restored = true;
-        paintAllCells();
-        $('cantMake').checked = state.cantMake;
-        $('saveMsg').className = 'msg warn';
-        $('saveMsg').textContent = 'Loaded the answers already saved for ' + mine.name + '. Change them and save again to update.';
-      }
-    }
-  }
+    if (!mine) return;
+    if (currentOnBlocks().length > 0 || state.cantMake) return;   // keep what they're already working on
 
-  function paintAllCells() {
-    const cells = $('pickGrid').querySelectorAll('.cell');
-    for (let i = 0; i < cells.length; i++) paintCell(cells[i]);
+    if (mine.attending === false) {
+      state.cantMake = true;
+    } else {
+      state.blocks = (Array.isArray(mine.blocks) && mine.blocks.length)
+        ? Core.hydrateBlocks(mine.blocks)
+        : Core.blocksFromSlots(mine.slots || []);
+      syncSlots();
+    }
+    restored = true;
+    $('cantMake').checked = state.cantMake;
+    renderPicker();
+    $('saveMsg').className = 'msg warn';
+    $('saveMsg').textContent = state.cantMake
+      ? 'Loaded the answer already saved for ' + mine.name + ' (not available). Change it and save again to update.'
+      : 'Loaded the answers already saved for ' + mine.name + '. Change them and save again to update.';
   }
 
   /* ---------- results rendering ---------- */
@@ -988,8 +1249,8 @@ function initUI() {
   loadLocal();
   $('nameInput').value = state.name;
   $('cantMake').checked = state.cantMake;
-  buildPickGrid();
-  bindGrid();
+  renderPicker();
+  bindPicker();
   syncLockUI();
 
   $('nameInput').addEventListener('input', (ev) => {
@@ -1014,20 +1275,20 @@ function initUI() {
   $('cantMake').addEventListener('change', (ev) => {
     if (!nameOk()) { ev.target.checked = false; nudgeName('Enter your name first — then you can answer.'); return; }
     state.cantMake = ev.target.checked;
-    if (state.cantMake) { state.selected.clear(); paintAllCells(); }
+    if (state.cantMake) { for (const k in state.blocks) state.blocks[k].on = false; syncSlots(); renderPicker(); }
     saveLocal();
+    resetSaveWarning();
   });
 
   $('saveBtn').addEventListener('click', save);
   $('clearBtn').addEventListener('click', () => {
     if (!nameOk()) { nudgeName(); return; }
-    state.selected.clear();
     state.cantMake = false;
     $('cantMake').checked = false;
-    paintAllCells();
-    saveLocal();
+    clearBlocks();
+    resetSaveWarning();
     $('saveMsg').className = 'msg';
-    $('saveMsg').textContent = 'Cleared. Nothing is removed from the planner until you save.';
+    $('saveMsg').textContent = 'Cleared. Nothing changes on the planner until you save.';
   });
 
   $('refreshBtn').addEventListener('click', () => refresh());

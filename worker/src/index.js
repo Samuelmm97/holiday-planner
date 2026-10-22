@@ -67,11 +67,26 @@ export default {
         : [];
       if (attending && slots.length === 0) return json({ error: 'pick at least one time, or mark that you cannot make it' }, 400);
 
+      // Optional structured blocks ({day, slot, start, end}) so phones restore the exact bars.
+      const blocks = attending && Array.isArray(body.blocks)
+        ? body.blocks
+            .filter((b) => b && typeof b.day === 'string' && typeof b.slot === 'string' &&
+              isFinite(+b.start) && isFinite(+b.end))
+            .slice(0, 40)
+            .map((b) => ({
+              day: b.day.slice(0, 10),
+              slot: String(b.slot).slice(0, 12),
+              start: Math.round(+b.start),
+              end: Math.round(+b.end),
+            }))
+        : [];
+
       const record = {
         id: nameKey(name),
         name,
         attending,
         slots,
+        blocks,
         updatedAt: new Date().toISOString(),
       };
       await store.put(prefix + record.id, JSON.stringify(record));

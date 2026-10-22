@@ -10,10 +10,17 @@ Currently: **Thanksgiving 2026** (Thu Nov 26) — pickable days Nov 24–28, 8 A
 
 ## How it works
 
-- **Tab 1 — My availability:** enter your name (required), then tap the hours you're free.
-  The time grid stays locked until a name is entered; tapping a block without a name
-  shakes the name field and tells you to fill it in. "I can't make any of these times"
-  records a decline (excluded from the "everyone free" math but listed for the planner).
+- **Tab 1 — My availability:** enter your name (required), then **tap the preset blocks** —
+  every day has a **Lunch (11–3)** and a **Dinner (5–9)** block. Tapping a block opts you in;
+  tapping again removes it. If your real hours differ, **drag the left or right edge** of a
+  block to widen or narrow it (snaps to the hour, minimum 1 hour, Lunch always stays left of
+  Dinner). Grabbing an edge also opts you into that block.
+  - The blocks stay **locked until a name is entered**; tapping one without a name shakes the
+    name field and tells you to fill it in.
+  - Submitting with a **single block** triggers a "pick more blocks, it makes matching much
+    easier" warning that must be confirmed with *Save anyway*.
+  - "I can't make any of these times" records a decline (excluded from the "everyone free"
+    math but listed for the planner).
 - **Tab 2 — Results:** ranked list of blocks where *everyone* is free (longest block first),
   falling back to closest-to-everyone windows with the missing names listed, a per-hour
   heatmap of how many people are free, each person's selected blocks, CSV export, and a
@@ -22,6 +29,14 @@ Currently: **Thanksgiving 2026** (Thu Nov 26) — pickable days Nov 24–28, 8 A
 Answers are saved to a shared backend (Cloudflare Worker + KV), so every phone that opens
 the link sees the same data. Picks are also cached in `localStorage` so a dropped connection
 never loses work.
+
+## Data model
+
+The block bars are the UI; hourly slots are the source of truth for matching.
+
+- Blocks live in the browser as `{ day, slot: 'lunch'|'dinner', start, end }` and are posted
+  alongside `slots` (one ISO hour key per selected hour) so the exact bars come back on any
+  device. Answers saved before blocks existed are reconstructed with `Core.blocksFromSlots`.
 
 ## Architecture
 
