@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b1020" />
+<title>Thanksgiving 2026 · Holiday Planner</title>
+<style>
+  :root{
+    --bg:#0b1020; --card:#131b2e; --card2:#0f172a; --line:#26314d; --line2:#1c2740;
+    --txt:#e9eefc; --dim:#93a3c4; --dim2:#6f7f9e;
+    --accent:#ff8a3d; --accent2:#f9762b; --good:#37d399; --bad:#ff5d5d; --sky:#38bdf8;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #1b2440 0%, var(--bg) 55%) no-repeat, var(--bg);
+    color:var(--txt);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%;
+    -webkit-tap-highlight-color:transparent;
+    min-height:100vh;
+  }
+  #root{max-width:980px;margin:0 auto;padding:0 12px 56px}
+
+  /* ---------- header ---------- */
+  .hero{padding:20px 2px 8px;text-align:center}
+  .kicker{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim2);font-weight:700}
+  .hero h1{margin:6px 0 4px;font-size:26px;line-height:1.15;letter-spacing:-.02em}
+  .hero .sub{margin:0;color:var(--dim);font-size:13px}
+  .hero .tz{margin:10px 0 0;font-size:12px;color:var(--dim2)}
+  .hero .tz strong{color:#ffc79a}
+  @media (min-width:700px){
+    .hero{padding:26px 2px 10px}
+    .hero h1{font-size:30px}
+    .hero .sub{font-size:14px}
+  }
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:8px;margin:16px 0 14px;background:var(--card2);padding:6px;border-radius:999px;border:1px solid var(--line2);
+        position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:20;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+  .tab{flex:1;appearance:none;border:0;background:transparent;color:var(--dim);font:inherit;font-weight:600;font-size:14px;
+       padding:10px 12px;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+  .tab.active{background:linear-gradient(180deg,#ff9d4d,#f9762b);color:#2a1500}
+  .pill{background:rgba(255,255,255,.14);color:inherit;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800;min-width:20px;text-align:center}
+  .tab:not(.active) .pill{background:#22304e;color:var(--dim)}
+
+  .tabpane{display:none}
+  .tabpane.active{display:block}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--card);border:1px solid var(--line2);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+  .card h2{margin:0 0 4px;font-size:16px;letter-spacing:-.01em}
+  .card .hint{margin:0 0 14px;color:var(--dim);font-size:13px}
+
+  /* ---------- fields ---------- */
+  .field{display:block;margin-bottom:10px}
+  .field > span{display:block;font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+  .field > span em{font-style:normal;color:var(--accent);text-transform:none;letter-spacing:0;font-weight:600;margin-left:6px;font-size:11px}
+  input[type=text]{
+    width:100%;padding:13px 14px;border-radius:11px;border:1px solid var(--line);background:#0b1324;color:var(--txt);
+    font:inherit;font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s
+  }
+  input[type=text]::placeholder{color:#5c6b8a}
+  input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,138,61,.16)}
+  input[type=text].err{border-color:var(--bad);box-shadow:0 0 0 3px rgba(255,93,93,.18)}
+  .shake{animation:shake .45s}
+  @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+
+  .msg{margin:8px 0 0;font-size:13px;min-height:0;color:var(--dim)}
+  .msg.error{color:#ff8f8f}
+  .msg.ok{color:#7ce7bb}
+  .msg.warn{color:#ffc266}
+
+  .lockbanner{
+    display:flex;align-items:center;gap:8px;margin:6px 0 12px;padding:10px 12px;border-radius:11px;
+    background:rgba(255,138,61,.10);border:1px solid rgba(255,138,61,.35);color:#ffc79a;font-size:13px;font-weight:600
+  }
+  .lockbanner.hide{display:none}
+
+  /* ---------- grid (mobile-first: fits a 320px phone, no scroll) ---------- */
+  .gridwrap{margin:2px 0 0}
+  .grid{display:grid;grid-template-columns:34px repeat(5,1fr);gap:3px}
+  .dhead{font-size:10px;font-weight:800;color:#c8d4ec;text-align:center;padding:0 0 6px;line-height:1.15}
+  .dhead b{display:block;font-size:11.5px}
+  .dhead span{display:block;font-weight:600;color:var(--dim2);font-size:9.5px}
+  .dhead.holiday b{color:#ffb173}
+  .tlabel{font-size:9.5px;font-weight:700;color:var(--dim2);display:flex;align-items:center;justify-content:flex-end;padding-right:4px;white-space:nowrap}
+  .cell{
+    height:40px;border-radius:9px;background:#182238;border:1px solid #243150;color:#8b9cbd;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+    cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+    touch-action:manipulation;transition:background .07s,border-color .07s,opacity .12s
+  }
+  @media (min-width:700px){
+    .grid{grid-template-columns:52px repeat(5,minmax(46px,1fr));gap:4px}
+    .dhead{font-size:11px;padding:2px 0 4px}
+    .dhead b{font-size:12px} .dhead span{font-size:10px}
+    .tlabel{font-size:10px;padding-right:6px}
+    .cell{height:30px;font-size:11px}
+  }
+  .cell:hover{background:#22304e}
+  .cell.sel{background:linear-gradient(180deg,#ffa45c,#f9762b);border-color:#ffb173;color:#2a1500}
+  .cell.sel:hover{background:linear-gradient(180deg,#ffb072,#ff8340)}
+  .grid.locked .cell{opacity:.42;cursor:not-allowed}
+  .grid.locked .cell:hover{background:#182238}
+  .cell.h{color:#eafff6;border-color:rgba(55,211,153,.30)}
+  .cell.hl{outline:2px solid var(--sky);outline-offset:-2px}
+  .cell.zero{opacity:.55}
+  .resultsGrid .cell{cursor:default}
+  .resultsGrid .cell:hover{background:inherit}
+
+  .legend{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:11px;color:var(--dim2);flex-wrap:wrap}
+  .legend .sw{width:16px;height:12px;border-radius:4px;border:1px solid var(--line);display:inline-block}
+
+  /* ---------- buttons ---------- */
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .savebar{position:sticky;bottom:0;z-index:6;padding:12px 0 calc(6px + env(safe-area-inset-bottom));
+           background:linear-gradient(180deg,rgba(19,27,46,0),var(--card) 42%)}
+  .savebar .btn{flex:1 1 auto;min-width:46%}
+  .savebar .btn.primary{flex:2 1 60%}
+  @media (min-width:700px){
+    .savebar{position:static;background:none;padding:0}
+    .savebar .btn{flex:0 0 auto}
+  }
+  .btn{appearance:none;border:1px solid var(--line);background:#1a2440;color:var(--txt);font:inherit;font-weight:700;font-size:15px;
+       padding:13px 16px;min-height:48px;border-radius:11px;cursor:pointer;transition:transform .06s,background .15s;
+       -webkit-tap-highlight-color:transparent}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:linear-gradient(180deg,#ff9d4d,#f9762b);border-color:#ffb173;color:#2a1500}
+  .btn.ghost{background:transparent}
+  .btn.small{padding:9px 12px;min-height:38px;font-size:12.5px;border-radius:9px;font-weight:700}
+  .btn.danger{color:#ff9a9a;border-color:#4a2330}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* ---------- toast ---------- */
+  .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(8px);
+         background:#1d2b47;color:#eafff6;border:1px solid #35507f;padding:12px 18px;border-radius:999px;font-size:13.5px;
+         font-weight:700;box-shadow:0 12px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;z-index:60;
+         transition:opacity .2s,transform .2s;max-width:92vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ---------- results ---------- */
+  .best{border:1px solid rgba(55,211,153,.35);background:linear-gradient(180deg,rgba(55,211,153,.10),rgba(55,211,153,.03))}
+  .rank{list-style:none;margin:0;padding:0;counter-reset:r}
+  .rank li{
+    counter-increment:r;display:flex;gap:12px;align-items:flex-start;padding:12px 12px;border-radius:12px;
+    background:#0f1a2e;border:1px solid var(--line2);margin-bottom:8px;cursor:pointer
+  }
+  .rank li:hover{border-color:#37507c}
+  .rank li::before{
+    content:counter(r);flex:0 0 26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:#1d2b47;color:#c9d6ef;font-size:12px;font-weight:800
+  }
+  .rank li.top::before{background:linear-gradient(180deg,#37d399,#1fa87a);color:#052018}
+  .rank .when{font-weight:700;font-size:14.5px}
+  .rank .meta{font-size:12px;color:var(--dim);margin-top:2px}
+  .rank .meta b{color:var(--good)}
+  .rank .meta .miss{color:#ffb0b0}
+  .empty{padding:16px;border-radius:12px;background:#0f1a2e;border:1px dashed var(--line);color:var(--dim);font-size:13.5px}
+
+  .ppl{list-style:none;margin:0;padding:0}
+  .ppl li{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line2)}
+  .ppl li:last-child{border-bottom:0}
+  .ppl .who{font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .ppl .times{font-size:12.5px;color:var(--dim);margin-top:3px;line-height:1.5}
+  .ppl .grow{flex:1;min-width:0}
+  .tag{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px}
+  .tag.in{background:rgba(55,211,153,.14);color:#7ce7bb;border:1px solid rgba(55,211,153,.3)}
+  .tag.out{background:rgba(255,93,93,.12);color:#ff9a9a;border:1px solid rgba(255,93,93,.3)}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .bar .status{font-size:12px;color:var(--dim2);flex:1;min-width:140px}
+
+  .chk{display:flex;gap:9px;align-items:center;font-size:13.5px;color:var(--dim);margin-top:14px;cursor:pointer}
+  .chk input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+
+  footer{margin-top:26px;text-align:center;font-size:11.5px;color:var(--dim2);line-height:1.7}
+  footer a{color:var(--dim)}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div id="root">
+
+  <header class="hero">
+    <div class="kicker">Holiday Planner</div>
+    <h1>🦃 Thanksgiving 2026</h1>
+    <p class="sub">Thursday, November 26 · pick the hours you're free, Nov 24 – 28</p>
+    <p class="tz">All times are <strong>Eastern Time (New York)</strong></p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="me" id="tabBtnMe">My availability</button>
+    <button class="tab" data-tab="results" id="tabBtnResults">Results <span class="pill" id="countPill">0</span></button>
+  </nav>
+
+  <main>
+    <!-- ============ TAB: MY AVAILABILITY ============ -->
+    <section class="tabpane active" id="pane-me">
+      <div class="card">
+        <h2>1. Your name</h2>
+        <p class="hint">Use the name your family will recognise. You can come back and change your answers any time.</p>
+        <label class="field">
+          <span>Name <em>required</em></span>
+          <input type="text" id="nameInput" maxlength="48" placeholder="e.g. Sarah Menaged" autocomplete="name" autocapitalize="words" spellcheck="false" />
+        </label>
+        <p class="msg" id="nameMsg"></p>
+
+        <h2 style="margin-top:22px">2. When are you free?</h2>
+        <p class="hint">Tap the hours you're available — tap again to remove. Pick as many blocks as you like.</p>
+
+        <div class="lockbanner" id="lockBanner">🔒 Enter your name above to unlock the time blocks.</div>
+        <div class="gridwrap">
+          <div class="grid locked" id="pickGrid"></div>
+        </div>
+
+        <label class="chk"><input type="checkbox" id="cantMake" /> I can't make any of these times</label>
+
+        <div class="actions savebar">
+          <button class="btn primary" id="saveBtn">Save my availability</button>
+          <button class="btn ghost" id="clearBtn">Clear my picks</button>
+        </div>
+        <p class="msg" id="saveMsg"></p>
+      </div>
+    </section>
+
+    <!-- ============ TAB: RESULTS ============ -->
+    <section class="tabpane" id="pane-results">
+      <div class="card best">
+        <h2>Times that work for everyone</h2>
+        <p class="hint" id="bestHint">Ranked by how much time everyone can share in one block.</p>
+        <ol class="rank" id="bestList"></ol>
+        <div id="bestEmpty"></div>
+      </div>
+
+      <div class="card">
+        <div class="bar">
+          <div class="status" id="statusLine">Loading…</div>
+          <button class="btn small" id="refreshBtn">Refresh</button>
+        </div>
+        <h2>Who's free when</h2>
+        <p class="hint">Number = how many people are free that hour. Tap a row to see names.</p>
+        <div class="gridwrap">
+          <div class="grid resultsGrid" id="heatGrid"></div>
+        </div>
+        <div class="legend">
+          <span class="sw" style="background:rgba(55,211,153,0.92)"></span> more people free
+          <span class="sw" style="background:rgba(55,211,153,0.22)"></span> fewer
+          <span class="sw" style="background:#182238"></span> nobody free
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Everyone's answers</h2>
+        <p class="hint">The list you asked for — each person and the blocks they picked.</p>
+        <ul class="ppl" id="peopleList"></ul>
+        <div class="actions">
+          <button class="btn small" id="csvBtn">Download CSV</button>
+          <button class="btn small" id="copyBtn">Copy summary for the group chat</button>
+        </div>
+        <p class="msg" id="exportMsg"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Answers are saved to a shared planner, so everyone who opens this link sees the same responses.<br />
+    Times shown in Eastern Time · Thanksgiving is Thu Nov 26, 2026.
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+/* ============================================================
+   Holiday availability planner — single file, shared backend.
+   Core is pure (no DOM) so it can be unit-tested in node.
+   ============================================================ */
+const API_BASE = 'https://holiday-planner-api.menagedsamuel.workers.dev';
+
+const Core = (() => {
+  const EVENT = {
+    id: 'thanksgiving-2026',
+    title: 'Thanksgiving 2026',
+    holiday: '2026-11-26',
+    days: ['2026-11-24', '2026-11-25', '2026-11-26', '2026-11-27', '2026-11-28'],
+    startHour: 8,
+    endHour: 23,               // exclusive -> last selectable hour is 10 PM - 11 PM
+    tzLabel: 'Eastern Time (New York)'
+  };
+
+  const pad2 = (n) => (n < 10 ? '0' : '') + n;
+  const hours = [];
+  for (let h = EVENT.startHour; h < EVENT.endHour; h++) hours.push(h);
+
+  const slotKey = (day, h) => day + 'T' + pad2(h);
+  const allSlots = () => {
+    const out = [];
+    for (const d of EVENT.days) for (const h of hours) out.push(slotKey(d, h));
+    return out;
+  };
+  const isSlotKey = (k) => typeof k === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}$/.test(k);
+  const normName = (n) => String(n || '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+  function fmtHour(h) {
+    const hh = h % 12 === 0 ? 12 : h % 12;
+    return hh + (h < 12 ? ' AM' : ' PM');
+  }
+  function fmtDay(day) {
+    const d = new Date(day + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  function fmtDaySplit(day) {
+    const d = new Date(day + 'T12:00:00');
+    return {
+      dow: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      md: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    };
+  }
+  function fmtRange(w) {
+    return fmtDay(w.day) + ' · ' + fmtHour(w.startHour) + ' – ' + fmtHour(w.endHour);
+  }
+  function dur(h) { return h + (h === 1 ? ' hour' : ' hours'); }
+
+  /** Merge a slot list into contiguous per-day blocks. */
+  function rangesOf(slots) {
+    const set = new Set((slots || []).filter(isSlotKey));
+    const out = [];
+    for (const day of EVENT.days) {
+      let run = null;
+      for (const h of hours) {
+        const has = set.has(slotKey(day, h));
+        if (has && run === null) run = h;
+        if (!has && run !== null) { out.push({ day, startHour: run, endHour: h, len: h - run }); run = null; }
+      }
+      if (run !== null) out.push({ day, startHour: run, endHour: EVENT.endHour, len: EVENT.endHour - run });
+    }
+    return out;
+  }
+
+  function rangesText(slots) {
+    const r = rangesOf(slots);
+    if (!r.length) return '';
+    return r.map(fmtRange).join('  •  ');
+  }
+
+  /** slot -> [names] */
+  function coverageMap(people) {
+    const map = new Map();
+    for (const p of people || []) {
+      if (!p || p.attending === false) continue;
+      for (const s of (p.slots || [])) {
+        if (!isSlotKey(s)) continue;
+        if (!map.has(s)) map.set(s, []);
+        const arr = map.get(s);
+        if (arr.indexOf(p.name) === -1) arr.push(p.name);
+      }
+    }
+    return map;
+  }
+
+  function attendingOf(people) { return (people || []).filter((p) => p && p.attending !== false); }
+
+  function windowCovers(w, p) {
+    if (!p || p.attending === false) return false;
+    const set = new Set(p.slots || []);
+    for (let h = w.startHour; h < w.endHour; h++) if (!set.has(slotKey(w.day, h))) return false;
+    return true;
+  }
+  function freeFor(w, people) { return attendingOf(people).filter((p) => windowCovers(w, p)).map((p) => p.name); }
+  function missingFor(w, people) { return attendingOf(people).filter((p) => !windowCovers(w, p)).map((p) => p.name); }
+
+  /**
+   * All candidate windows, best first.
+   * A window is a contiguous same-day block in which >= `coverage` people are free
+   * for every hour of the block. Ranked by coverage, then by length.
+   */
+  function rankWindows(people) {
+    const att = attendingOf(people);
+    const n = att.length;
+    const cov = coverageMap(people);
+    const cnt = (k) => (cov.get(k) || []).length;
+
+    const byWindow = new Map();
+    for (let need = n; need >= 1; need--) {
+      for (const day of EVENT.days) {
+        let run = null;
+        for (let i = 0; i <= hours.length; i++) {
+          const h = hours[i];
+          const ok = h !== undefined && cnt(slotKey(day, h)) >= need;
+          if (ok && run === null) run = h;
+          if (!ok && run !== null) {
+            const key = day + '|' + run + '|' + h;
+            const prev = byWindow.get(key);
+            if (!prev || prev.coverage < need) byWindow.set(key, { day, startHour: run, endHour: h, len: h - run, coverage: need });
+            run = null;
+          }
+        }
+      }
+    }
+
+    let list = Array.from(byWindow.values());
+    list.sort((a, b) =>
+      b.coverage - a.coverage || b.len - a.len || a.day.localeCompare(b.day) || a.startHour - b.startHour);
+
+    // Drop windows swamped by an earlier, at-least-as-good window on the same day.
+    const kept = [];
+    for (const w of list) {
+      const dominated = kept.some((k) =>
+        k.day === w.day && k.coverage >= w.coverage && k.startHour <= w.startHour && k.endHour >= w.endHour &&
+        !(k.startHour === w.startHour && k.endHour === w.endHour));
+      if (!dominated) kept.push(w);
+    }
+
+    const everyone = kept.filter((w) => w.coverage === n && n > 0);
+    const near = kept.filter((w) => w.coverage < n);
+    return { n, everyone, near, total: everyone.reduce((a, w) => a + w.len, 0) };
+  }
+
+  return {
+    EVENT, hours, slotKey, allSlots, isSlotKey, normName,
+    fmtHour, fmtDay, fmtDaySplit, fmtRange, dur,
+    rangesOf, rangesText, coverageMap, attendingOf,
+    freeFor, missingFor, rankWindows, windowCovers
+  };
+})();
+globalThis.Core = Core;
+
+/* ============================================================
+   UI
+   ============================================================ */
+function initUI() {
+  const $ = (id) => document.getElementById(id);
+  const E = Core.EVENT;
+  const LS = 'hp.' + E.id;
+  const API = API_BASE + '/api/events/' + E.id;
+
+  const state = {
+    name: '',
+    selected: new Set(),
+    cantMake: false,
+    people: [],
+    loading: false,
+    error: '',
+    loadedOnce: false,
+    lastSync: null
+  };
+
+  /* ---------- tiny DOM helper (textContent only, never innerHTML for user data) ---------- */
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    if (attrs) for (const k in attrs) {
+      if (k === 'class') n.className = attrs[k];
+      else if (k === 'text') n.textContent = attrs[k];
+      else if (k === 'style') n.setAttribute('style', attrs[k]);
+      else if (k.slice(0, 2) === 'on') n.addEventListener(k.slice(2), attrs[k]);
+      else if (attrs[k] !== null && attrs[k] !== undefined && attrs[k] !== false) n.setAttribute(k, attrs[k]);
+    }
+    for (const kid of kids) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      n.appendChild(typeof kid === 'string' ? document.createTextNode(kid) : kid);
+    }
+    return n;
+  }
+
+  /* ---------- toast ---------- */
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = $('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  /* ---------- storage ---------- */
+  function saveLocal() {
+    try {
+      localStorage.setItem(LS + '.name', state.name);
+      localStorage.setItem(LS + '.slots', JSON.stringify(Array.from(state.selected)));
+      localStorage.setItem(LS + '.cantMake', state.cantMake ? '1' : '0');
+    } catch (e) { /* private mode — ignore */ }
+  }
+  function loadLocal() {
+    try {
+      state.name = localStorage.getItem(LS + '.name') || '';
+      const raw = localStorage.getItem(LS + '.slots');
+      if (raw) { const a = JSON.parse(raw); if (Array.isArray(a)) a.filter(Core.isSlotKey).forEach((s) => state.selected.add(s)); }
+      state.cantMake = localStorage.getItem(LS + '.cantMake') === '1';
+    } catch (e) { /* ignore */ }
+  }
+
+  /* ---------- name validation ---------- */
+  function nameProblem(v) {
+    const t = (v === undefined ? state.name : v).trim();
+    if (!t) return 'Enter your name first — then you can pick times.';
+    if (t.length < 2) return 'That name is too short — please use your full first name.';
+    if (!/[a-z\u00c0-\u024f]/i.test(t)) return 'Please use letters in your name.';
+    return '';
+  }
+  function nameOk() { return nameProblem() === ''; }
+
+  function nudgeName(msg) {
+    const input = $('nameInput');
+    $('nameMsg').textContent = msg || nameProblem() || 'Enter your name first.';
+    $('nameMsg').className = 'msg error';
+    input.classList.add('err');
+    input.classList.remove('shake');
+    void input.offsetWidth;          // restart the animation
+    input.classList.add('shake');
+    try { input.focus({ preventScroll: false }); } catch (e) { input.focus(); }
+    if (input.scrollIntoView) input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    setTimeout(() => input.classList.remove('shake'), 600);
+  }
+
+  function syncLockUI() {
+    const ok = nameOk();
+    const grid = $('pickGrid');
+    grid.classList.toggle('locked', !ok);
+    $('lockBanner').classList.toggle('hide', ok);
+    if (ok) {
+      const input = $('nameInput');
+      input.classList.remove('err');
+      if ($('nameMsg').classList.contains('error')) { $('nameMsg').textContent = ''; $('nameMsg').className = 'msg'; }
+    }
+  }
+
+  /* ---------- pick grid ---------- */
+  let dragMode = null;   // true -> adding, false -> removing, null -> idle
+  let dragged = false;
+
+  function paintCell(cell) {
+    const on = state.selected.has(cell.dataset.slot);
+    cell.classList.toggle('sel', on);
+    cell.setAttribute('aria-pressed', on ? 'true' : 'false');
+    cell.title = on ? 'Selected — tap to remove' : 'Tap to select';
+  }
+
+  function buildPickGrid() {
+    const grid = $('pickGrid');
+    grid.textContent = '';
+    grid.appendChild(el('div', { class: 'dhead' }));      // corner
+    for (const d of E.days) {
+      const p = Core.fmtDaySplit(d);
+      grid.appendChild(el('div', { class: 'dhead' + (d === E.holiday ? ' holiday' : '') },
+        el('b', { text: p.dow }), el('span', { text: p.md })));
+    }
+    for (const h of Core.hours) {
+      grid.appendChild(el('div', { class: 'tlabel', text: Core.fmtHour(h) }));
+      for (const d of E.days) {
+        const c = el('div', { class: 'cell', tabindex: '0', role: 'button' });
+        c.dataset.slot = Core.slotKey(d, h);
+        c.dataset.day = d;
+        c.dataset.hour = String(h);
+        paintCell(c);
+        grid.appendChild(c);
+      }
+    }
+  }
+
+  function toggleCell(cell, mode) {
+    const k = cell.dataset.slot;
+    if (!k) return;
+    if (mode === true) state.selected.add(k);
+    else if (mode === false) state.selected.delete(k);
+    else state.selected.has(k) ? state.selected.delete(k) : state.selected.add(k);
+    if (state.selected.size) state.cantMake = false;
+    paintCell(cell);
+    saveLocal();
+  }
+
+  function cellUnder(x, y) {
+    const n = document.elementFromPoint(x, y);
+    return n && n.classList && n.classList.contains('cell') ? n : null;
+  }
+
+  function bindGrid() {
+    const grid = $('pickGrid');
+
+    grid.addEventListener('pointerdown', (ev) => {
+      const cell = ev.target.closest ? ev.target.closest('.cell') : null;
+      if (!cell) return;
+      if (!nameOk()) { ev.preventDefault(); nudgeName(); return; }   // <-- gate
+      ev.preventDefault();
+      dragged = false;
+      dragMode = !state.selected.has(cell.dataset.slot);
+      toggleCell(cell, dragMode);
+      try { grid.setPointerCapture(ev.pointerId); } catch (e) {}
+    });
+
+    grid.addEventListener('pointermove', (ev) => {
+      if (dragMode === null) return;
+      dragged = true;
+      const cell = cellUnder(ev.clientX, ev.clientY);
+      if (!cell) return;
+      const has = state.selected.has(cell.dataset.slot);
+      if (dragMode === true && !has) toggleCell(cell, true);
+      if (dragMode === false && has) toggleCell(cell, false);
+    });
+
+    const end = () => { dragMode = null; };
+    grid.addEventListener('pointerup', end);
+    grid.addEventListener('pointercancel', end);
+    window.addEventListener('pointerup', end);
+
+    // keyboard access
+    grid.addEventListener('keydown', (ev) => {
+      const cell = ev.target.closest ? ev.target.closest('.cell') : null;
+      if (!cell) return;
+      if (ev.key === ' ' || ev.key === 'Enter') {
+        ev.preventDefault();
+        if (!nameOk()) { nudgeName(); return; }
+        toggleCell(cell, null);
+      }
+    });
+
+    // block context menu long-press oddities on mobile
+    grid.addEventListener('contextmenu', (ev) => { if (ev.target.closest('.cell')) ev.preventDefault(); });
+  }
+
+  /* ---------- saving ---------- */
+  async function save() {
+    const problem = nameProblem();
+    if (problem) { nudgeName(problem); $('saveMsg').className = 'msg error'; $('saveMsg').textContent = problem; return; }
+    if (!state.cantMake && state.selected.size === 0) {
+      $('saveMsg').className = 'msg error';
+      $('saveMsg').textContent = 'Pick at least one time block, or tick "I can\'t make any of these times".';
+      return;
+    }
+
+    const btn = $('saveBtn');
+    btn.disabled = true;
+    const oldLabel = btn.textContent;
+    btn.textContent = 'Saving…';
+    $('saveMsg').className = 'msg';
+    $('saveMsg').textContent = '';
+
+    try {
+      const res = await fetch(API + '/responses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: state.name.trim(),
+          attending: !state.cantMake,
+          slots: state.cantMake ? [] : Array.from(state.selected).sort()
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+
+      saveLocal();
+      $('saveMsg').className = 'msg ok';
+      $('saveMsg').textContent = 'Saved — thanks, ' + data.person.name + '!';
+      showToast('Saved — thanks, ' + data.person.name + '!');
+      await refresh(true);
+      showTab('results');
+    } catch (err) {
+      $('saveMsg').className = 'msg error';
+      $('saveMsg').textContent = 'Could not save: ' + (err && err.message ? err.message : 'network error') +
+        '. Your picks are kept in this browser — try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldLabel;
+    }
+  }
+
+  /* ---------- data ---------- */
+  async function refresh(silent) {
+    state.loading = true;
+    if (!silent) renderStatus();
+    try {
+      const res = await fetch(API + '?t=' + Date.now());
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      state.people = Array.isArray(data.people) ? data.people : [];
+      state.error = '';
+      state.lastSync = new Date();
+      state.loadedOnce = true;
+      maybeRestorePicks();
+    } catch (err) {
+      state.error = 'Could not reach the shared planner (' + (err && err.message ? err.message : 'network') + ').';
+    } finally {
+      state.loading = false;
+      renderAll();
+    }
+  }
+
+  let restored = false;
+  function maybeRestorePicks() {
+    if (restored) return;
+    const mine = state.people.find((p) => Core.normName(p.name) === Core.normName(state.name));
+    if (mine && state.selected.size === 0 && !state.cantMake) {
+      if (mine.attending === false) state.cantMake = true;
+      else (mine.slots || []).filter(Core.isSlotKey).forEach((s) => state.selected.add(s));
+      if (state.cantMake || state.selected.size) {
+        restored = true;
+        paintAllCells();
+        $('cantMake').checked = state.cantMake;
+        $('saveMsg').className = 'msg warn';
+        $('saveMsg').textContent = 'Loaded the answers already saved for ' + mine.name + '. Change them and save again to update.';
+      }
+    }
+  }
+
+  function paintAllCells() {
+    const cells = $('pickGrid').querySelectorAll('.cell');
+    for (let i = 0; i < cells.length; i++) paintCell(cells[i]);
+  }
+
+  /* ---------- results rendering ---------- */
+  let highlight = null;   // {day,startHour,endHour}
+
+  function renderStatus() {
+    const att = Core.attendingOf(state.people).length;
+    const total = state.people.length;
+    const bits = [];
+    if (!state.loadedOnce && state.loading) bits.push('Loading…');
+    else if (total === 0) bits.push('No answers yet — be the first.');
+    else {
+      bits.push(total + (total === 1 ? ' person has' : ' people have') + ' answered');
+      if (att !== total) bits.push(att + ' available');
+      if (state.lastSync) bits.push('updated ' + state.lastSync.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+    }
+    if (state.error) bits.push(state.error);
+    $('statusLine').textContent = bits.join(' · ');
+    $('countPill').textContent = String(total);
+  }
+
+  function renderBest() {
+    const best = Core.rankWindows(state.people);
+    const list = $('bestList');
+    const emptyBox = $('bestEmpty');
+    list.textContent = '';
+    emptyBox.textContent = '';
+
+    if (best.n === 0) {
+      $('bestHint').textContent = 'Waiting for the first answer.';
+      emptyBox.appendChild(el('div', { class: 'empty', text: 'Nobody has submitted their availability yet. Fill in the first tab and save — then this fills in automatically.' }));
+      return;
+    }
+    if (best.n === 1) {
+      $('bestHint').textContent = 'Only one person so far — their free blocks are below. Ranked automatically once more people answer.';
+    } else if (best.everyone.length) {
+      $('bestHint').textContent = 'Ranked by how much time everyone can share in one block. Tap a block to see it on the grid.';
+    } else {
+      $('bestHint').textContent = 'No single block fits everyone yet. Closest options are listed below, best first.';
+    }
+
+    const rows = [];
+    if (best.everyone.length) {
+      best.everyone.forEach((w, i) => rows.push({ w, top: i === 0, everyone: true }));
+    } else {
+      best.near.slice(0, 6).forEach((w, i) => rows.push({ w, top: i === 0, everyone: false }));
+    }
+
+    if (!rows.length) {
+      emptyBox.appendChild(el('div', { class: 'empty', text: 'No overlapping hours found. Someone may need to widen their picks.' }));
+      return;
+    }
+
+    for (const r of rows) {
+      const w = r.w;
+      const free = Core.freeFor(w, state.people);
+      const missing = Core.missingFor(w, state.people);
+      const meta = [];
+      if (r.everyone) meta.push(el('b', { text: 'everyone free' }), ' · ' + Core.dur(w.len) + ' · ' + free.length + '/' + best.n);
+      else {
+        meta.push(el('span', { text: w.coverage + ' of ' + best.n + ' free' }), ' · ' + Core.dur(w.len));
+        if (missing.length) meta.push(el('span', { class: 'miss', text: ' · missing: ' + missing.join(', ') }));
+      }
+      const li = el('li', { class: (r.top ? 'top' : ''), onclick: () => { highlight = (highlight && highlight.day === w.day && highlight.startHour === w.startHour && highlight.endHour === w.endHour) ? null : w; renderHeat(); } },
+        el('div', {},
+          el('div', { class: 'when', text: Core.fmtRange(w) }),
+          el('div', { class: 'meta' }, ...meta)
+        )
+      );
+      list.appendChild(li);
+    }
+  }
+
+  function renderHeat() {
+    const grid = $('heatGrid');
+    grid.textContent = '';
+    const people = state.people;
+    const n = Core.attendingOf(people).length;
+    const cov = Core.coverageMap(people);
+
+    grid.appendChild(el('div', { class: 'dhead' }));
+    for (const d of E.days) {
+      const p = Core.fmtDaySplit(d);
+      grid.appendChild(el('div', { class: 'dhead' + (d === E.holiday ? ' holiday' : '') },
+        el('b', { text: p.dow }), el('span', { text: p.md })));
+    }
+
+    for (const h of Core.hours) {
+      grid.appendChild(el('div', { class: 'tlabel', text: Core.fmtHour(h) }));
+      for (const d of E.days) {
+        const k = Core.slotKey(d, h);
+        const names = cov.get(k) || [];
+        const c = names.length;
+        const frac = n ? c / n : 0;
+        const alpha = c === 0 ? 0 : (0.18 + 0.74 * frac).toFixed(3);
+        const cell = el('div', {
+          class: 'cell h' + (c === 0 ? ' zero' : '') + (highlight && highlight.day === d && h >= highlight.startHour && h < highlight.endHour ? ' hl' : ''),
+          text: c ? String(c) : '',
+          title: names.length ? names.join(', ') : 'nobody free'
+        });
+        if (c === 0) cell.setAttribute('style', 'background:#182238;border-color:#243150;');
+        else cell.setAttribute('style', 'background:rgba(55,211,153,' + alpha + ')');
+        cell.addEventListener('click', () => {
+          $('statusLine').textContent = names.length
+            ? Core.fmtDay(d) + ' ' + Core.fmtHour(h) + ' — free: ' + names.join(', ')
+            : Core.fmtDay(d) + ' ' + Core.fmtHour(h) + ' — nobody free';
+        });
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function renderPeople() {
+    const ul = $('peopleList');
+    ul.textContent = '';
+    if (!state.people.length) {
+      ul.appendChild(el('li', {}, el('div', { class: 'grow' }, el('div', { class: 'times', text: 'No answers yet.' }))));
+      return;
+    }
+    for (const p of state.people) {
+      const blocks = Core.rangesOf(p.slots || []);
+      const times = p.attending === false
+        ? 'Can\'t make any of these times'
+        : (blocks.length ? blocks.map((r) => Core.fmtRange(r) + ' (' + Core.dur(r.len) + ')').join('  •  ') : 'No times picked');
+      const del = el('button', {
+        class: 'btn small danger',
+        text: 'Remove',
+        onclick: async () => {
+          if (!confirm('Remove ' + p.name + '\'s answer from the planner?')) return;
+          try {
+            const r = await fetch(API + '/responses/' + encodeURIComponent(p.id), { method: 'DELETE' });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            await refresh();
+          } catch (e) {
+            $('exportMsg').className = 'msg error';
+            $('exportMsg').textContent = 'Could not remove: ' + e.message;
+          }
+        }
+      });
+      ul.appendChild(el('li', {},
+        el('div', { class: 'grow' },
+          el('div', { class: 'who' },
+            p.name,
+            el('span', { class: 'tag ' + (p.attending === false ? 'out' : 'in'), text: p.attending === false ? 'not available' : 'available' })
+          ),
+          el('div', { class: 'times', text: times })
+        ),
+        del
+      ));
+    }
+  }
+
+  function renderAll() {
+    renderStatus();
+    renderBest();
+    renderHeat();
+    renderPeople();
+  }
+
+  /* ---------- export ---------- */
+  function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
+
+  function buildCSV() {
+    const lines = ['Name,Available,Day,Start,End,Hours'];
+    for (const p of state.people) {
+      if (p.attending === false) { lines.push([csvCell(p.name), 'no', '', '', '', ''].join(',')); continue; }
+      const blocks = Core.rangesOf(p.slots || []);
+      if (!blocks.length) { lines.push([csvCell(p.name), 'yes', '', '', '', ''].join(',')); continue; }
+      for (const r of blocks) {
+        lines.push([csvCell(p.name), 'yes', r.day, Core.fmtHour(r.startHour), Core.fmtHour(r.endHour), r.len].join(','));
+      }
+    }
+    const best = Core.rankWindows(state.people);
+    lines.push('');
+    lines.push('Best windows for everyone (ranked)');
+    lines.push('Day,Start,End,Hours,People');
+    for (const w of (best.everyone.length ? best.everyone : best.near)) {
+      lines.push([w.day, Core.fmtHour(w.startHour), Core.fmtHour(w.endHour), w.len, w.coverage + '/' + best.n].join(','));
+    }
+    return lines.join('\r\n');
+  }
+
+  function downloadCSV() {
+    const blob = new Blob([buildCSV()], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'thanksgiving-2026-availability.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+    $('exportMsg').className = 'msg ok';
+    $('exportMsg').textContent = 'CSV downloaded.';
+  }
+
+  function buildSummary() {
+    const best = Core.rankWindows(state.people);
+    const out = [];
+    out.push('🦃 Thanksgiving 2026 — availability (times in Eastern)');
+    out.push('');
+    for (const p of state.people) {
+      if (p.attending === false) { out.push('• ' + p.name + ': can\'t make it'); continue; }
+      const t = Core.rangesText(p.slots || []);
+      out.push('• ' + p.name + ': ' + (t || 'no times given'));
+    }
+    out.push('');
+    if (best.everyone.length) {
+      out.push('Best for everyone:');
+      best.everyone.slice(0, 5).forEach((w, i) => {
+        out.push('  ' + (i + 1) + '. ' + Core.fmtRange(w) + '  (' + Core.dur(w.len) + ')');
+      });
+    } else if (best.near.length) {
+      out.push('No block works for everyone. Closest:');
+      best.near.slice(0, 4).forEach((w, i) => {
+        out.push('  ' + (i + 1) + '. ' + Core.fmtRange(w) + '  (' + w.coverage + '/' + best.n + ' free, missing: ' + Core.missingFor(w, state.people).join(', ') + ')');
+      });
+    } else {
+      out.push('No overlapping times yet.');
+    }
+    return out.join('\n');
+  }
+
+  async function copySummary() {
+    const txt = buildSummary();
+    try {
+      await navigator.clipboard.writeText(txt);
+      $('exportMsg').className = 'msg ok';
+      $('exportMsg').textContent = 'Summary copied to the clipboard.';
+    } catch (e) {
+      $('exportMsg').className = 'msg warn';
+      $('exportMsg').textContent = 'Clipboard blocked — here it is:\n' + txt;
+    }
+  }
+
+  /* ---------- tabs ---------- */
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+    $('pane-me').classList.toggle('active', name === 'me');
+    $('pane-results').classList.toggle('active', name === 'results');
+    if (name === 'results') { renderAll(); refresh(true); }
+  }
+
+  /* ---------- wire up ---------- */
+  loadLocal();
+  $('nameInput').value = state.name;
+  $('cantMake').checked = state.cantMake;
+  buildPickGrid();
+  bindGrid();
+  syncLockUI();
+
+  $('nameInput').addEventListener('input', (ev) => {
+    state.name = ev.target.value;
+    ev.target.classList.remove('err');
+    $('nameMsg').textContent = '';
+    $('nameMsg').className = 'msg';
+    syncLockUI();
+    saveLocal();
+    maybeRestorePicks();
+    // warn if this name already answered
+    const mine = state.people.find((p) => Core.normName(p.name) === Core.normName(state.name));
+    if (mine && nameOk()) {
+      $('nameMsg').className = 'msg warn';
+      $('nameMsg').textContent = 'You answered before (' + new Date(mine.updatedAt).toLocaleString('en-US') + '). Saving again updates your answer.';
+    }
+  });
+  $('nameInput').addEventListener('blur', () => {
+    if ($('nameInput').value.trim() && !nameOk()) nudgeName();
+  });
+
+  $('cantMake').addEventListener('change', (ev) => {
+    if (!nameOk()) { ev.target.checked = false; nudgeName('Enter your name first — then you can answer.'); return; }
+    state.cantMake = ev.target.checked;
+    if (state.cantMake) { state.selected.clear(); paintAllCells(); }
+    saveLocal();
+  });
+
+  $('saveBtn').addEventListener('click', save);
+  $('clearBtn').addEventListener('click', () => {
+    if (!nameOk()) { nudgeName(); return; }
+    state.selected.clear();
+    state.cantMake = false;
+    $('cantMake').checked = false;
+    paintAllCells();
+    saveLocal();
+    $('saveMsg').className = 'msg';
+    $('saveMsg').textContent = 'Cleared. Nothing is removed from the planner until you save.';
+  });
+
+  $('refreshBtn').addEventListener('click', () => refresh());
+  $('csvBtn').addEventListener('click', downloadCSV);
+  $('copyBtn').addEventListener('click', copySummary);
+
+  document.querySelectorAll('.tab').forEach((t) => {
+    t.addEventListener('click', () => showTab(t.dataset.tab));
+  });
+
+  refresh(true);
+  setInterval(() => { if ($('pane-results').classList.contains('active')) refresh(true); }, 30000);
+}
+
+if (typeof document !== 'undefined' && document.getElementById('root')) initUI();
+</script>
+</body>
+</html>

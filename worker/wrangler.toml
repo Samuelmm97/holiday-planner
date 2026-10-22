@@ -1,0 +1,8 @@
+name = "holiday-planner-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "HOLIDAY_KV"
+id = "df672ad71d5142aa8800c489ccca2132"
