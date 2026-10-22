@@ -651,6 +651,7 @@ function initUI() {
       if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
 
       saveLocal();
+      promoteLocal(data.person);
       $('saveMsg').className = 'msg ok';
       $('saveMsg').textContent = 'Saved — thanks, ' + data.person.name + '!';
       showToast('Saved — thanks, ' + data.person.name + '!');
@@ -667,6 +668,37 @@ function initUI() {
   }
 
   /* ---------- data ---------- */
+  // Answers we just wrote can take ~30s to become visible through Cloudflare KV's
+  // edge cache. Keep a local overlay so the person who just saved sees their own
+  // answer immediately; drop it as soon as the server echoes it back.
+  const overlay = new Map();
+  const tombstones = new Map();   // entries we deleted locally, until the edge catches up
+
+  function promoteLocal(person) {
+    if (!person || !person.id) return;
+    overlay.set(person.id, person);
+    tombstones.delete(person.id);
+    setTimeout(() => { if (overlay.delete(person.id)) renderAll(); }, 180000);
+  }
+
+  function buryLocal(id) {
+    overlay.delete(id);
+    tombstones.set(id, true);
+    setTimeout(() => { if (tombstones.delete(id)) refresh(true); }, 180000);
+  }
+
+  function mergeServer(serverList) {
+    const byId = new Map();
+    for (const p of serverList) {
+      if (!p || !p.id) continue;
+      if (tombstones.has(p.id)) continue;            // we just removed this one
+      byId.set(p.id, p);
+      if (overlay.has(p.id)) overlay.delete(p.id);   // settled
+    }
+    for (const [id, p] of overlay) if (!byId.has(id) && !tombstones.has(id)) byId.set(id, p);
+    state.people = Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   async function refresh(silent) {
     state.loading = true;
     if (!silent) renderStatus();
@@ -674,7 +706,7 @@ function initUI() {
       const res = await fetch(API + '?t=' + Date.now());
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-      state.people = Array.isArray(data.people) ? data.people : [];
+      mergeServer(Array.isArray(data.people) ? data.people : []);
       state.error = '';
       state.lastSync = new Date();
       state.loadedOnce = true;
@@ -839,7 +871,10 @@ function initUI() {
           try {
             const r = await fetch(API + '/responses/' + encodeURIComponent(p.id), { method: 'DELETE' });
             if (!r.ok) throw new Error('HTTP ' + r.status);
-            await refresh();
+            buryLocal(p.id);
+            state.people = state.people.filter((x) => x.id !== p.id);
+            renderAll();
+            await refresh(true);
           } catch (e) {
             $('exportMsg').className = 'msg error';
             $('exportMsg').textContent = 'Could not remove: ' + e.message;
