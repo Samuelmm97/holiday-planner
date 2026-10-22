@@ -17,8 +17,9 @@ Currently: **Thanksgiving 2026** (Thu Nov 26) — pickable days Nov 24–28, 8 A
   Dinner). Grabbing an edge also opts you into that block.
   - The blocks stay **locked until a name is entered**; tapping one without a name shakes the
     name field and tells you to fill it in.
-  - Submitting with a **single block** triggers a "pick more blocks, it makes matching much
-    easier" warning that must be confirmed with *Save anyway*.
+  - Submitting with a **single block** opens a modal warning (⚠️ icon, bold consequence
+    line) offering "Let me pick more blocks" or "Save anyway, just this one"; saving only
+    proceeds on the explicit override.
   - "I can't make any of these times" records a decline (excluded from the "everyone free"
     math but listed for the planner).
 - **Tab 2 — Results:** ranked list of blocks where *everyone* is free (longest block first),

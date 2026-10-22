@@ -186,8 +186,12 @@ ok(/function nameOk\(\)/.test(src), 'nameOk() exists');
 ok(/if \(!nameOk\(\)\) \{ ev\.preventDefault\(\); nudgeName\(\); return; \}/.test(src), 'pointerdown on a block is gated on the name');
 ok(/\$\('pickCards'\)\.classList\.toggle\('locked', !ok\)/.test(src), 'blocks locked when the name is missing');
 ok(/function nudgeName/.test(src), 'nudgeName warns the user');
-ok(/Save anyway/.test(src), 'single-block submission asks for confirmation');
-ok(/onBlocks\.length === 1/.test(src), 'warning triggers exactly on one block');
+ok(/confirmSingleBlock/.test(src), 'single-block submit opens the warning dialog');
+ok(/await confirmSingleBlock\(\)/.test(src), 'save waits for the dialog answer');
+ok(/role="dialog" aria-modal="true"/.test(html), 'warning is a real dialog');
+ok(/class="modalicon"[^>]*>⚠/.test(html), 'dialog shows a warning icon');
+ok(/Let me pick more blocks/.test(html), 'dialog offers the safe choice first');
+ok(/Save anyway, just this one/.test(html), 'dialog allows overriding');
 ok(/Core\.resizeBlock/.test(src), 'edge dragging wired up');
 ok(/blocks: onBlocks/.test(src), 'block layout is sent to the backend');
 

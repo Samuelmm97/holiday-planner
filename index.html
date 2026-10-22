@@ -175,6 +175,23 @@
   .btn.danger{color:#ff9a9a;border-color:#4a2330}
   .btn:disabled{opacity:.5;cursor:not-allowed}
 
+  /* ---------- modal (single-block warning) ---------- */
+  .modalback{position:fixed;inset:0;background:rgba(4,8,18,.74);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+             z-index:80;display:none;align-items:center;justify-content:center;padding:18px}
+  .modalback.show{display:flex}
+  .modalcard{width:100%;max-width:420px;border-radius:18px;padding:22px 18px 16px;
+             background:linear-gradient(180deg,#221522,#121a2f 65%);border:1.5px solid rgba(255,138,61,.6);
+             box-shadow:0 26px 70px rgba(0,0,0,.65);animation:pop .18s ease-out}
+  @keyframes pop{from{transform:scale(.93);opacity:0}to{transform:scale(1);opacity:1}}
+  .modalicon{width:54px;height:54px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;
+             font-size:27px;line-height:1;background:rgba(255,138,61,.18);border:1.5px solid rgba(255,138,61,.55)}
+  .modalcard h3{margin:0 0 10px;text-align:center;font-size:18.5px;line-height:1.25;color:#ffd9b3;letter-spacing:-.01em}
+  .modalcard p{margin:0 0 9px;font-size:13.5px;line-height:1.55;color:#d9e2f4;text-align:center}
+  .modalcard p b{color:#ffc79a}
+  .modalcard p.warnline{color:#ffb0b0;font-weight:700}
+  .modalbtns{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+  .modalbtns .btn{width:100%}
+
   /* ---------- toast ---------- */
   .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(8px);
          background:#1d2b47;color:#eafff6;border:1px solid #35507f;padding:12px 18px;border-radius:999px;font-size:13.5px;
@@ -308,6 +325,19 @@
     Answers are saved to a shared planner, so everyone who opens this link sees the same responses.<br />
     Times shown in Eastern Time · Thanksgiving is Thu Nov 26, 2026.
   </footer>
+
+  <div class="modalback" id="warnModal" role="dialog" aria-modal="true" aria-labelledby="warnTitle">
+    <div class="modalcard">
+      <div class="modalicon" aria-hidden="true">⚠️</div>
+      <h3 id="warnTitle">Only one time block picked</h3>
+      <p>You've marked just <b>one</b> block as free. It's much easier to find a time that works for everyone when people mark <b>every</b> block they could possibly make — even the days you're only <i>maybe</i> free.</p>
+      <p class="warnline">With one block, you're much more likely to block the whole group from finding a time.</p>
+      <div class="modalbtns">
+        <button class="btn primary" id="warnKeep">Let me pick more blocks</button>
+        <button class="btn ghost" id="warnAnyway">Save anyway, just this one</button>
+      </div>
+    </div>
+  </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
@@ -706,9 +736,46 @@ function initUI() {
   }
 
   function resetSaveWarning() {
-    state.confirmSingle = false;
     const btn = $('saveBtn');
-    if (btn && btn.dataset.warn === '1') { btn.textContent = 'Save my availability'; btn.dataset.warn = '0'; }
+    if (btn && !btn.disabled) btn.textContent = 'Save my availability';
+    closeWarnModal();
+  }
+
+  /* ---------- single-block warning dialog ---------- */
+  let warnResolve = null;
+
+  function closeWarnModal() {
+    const back = $('warnModal');
+    if (!back || !back.classList.contains('show')) return;
+    back.classList.remove('show');
+    document.body.style.overflow = '';
+    if (warnResolve) { const r = warnResolve; warnResolve = null; r(false); }
+  }
+
+  function confirmSingleBlock() {
+    return new Promise((resolve) => {
+      const back = $('warnModal');
+      warnResolve = resolve;
+      back.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      const done = (val) => {
+        back.classList.remove('show');
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', onKey);
+        back.removeEventListener('click', onBack);
+        $('warnKeep').onclick = null;
+        $('warnAnyway').onclick = null;
+        if (warnResolve === resolve) warnResolve = null;
+        resolve(val);
+      };
+      const onKey = (e) => { if (e.key === 'Escape') done(false); };
+      const onBack = (e) => { if (e.target === back) done(false); };
+      $('warnKeep').onclick = () => done(false);
+      $('warnAnyway').onclick = () => done(true);
+      document.addEventListener('keydown', onKey);
+      back.addEventListener('click', onBack);
+      setTimeout(() => { try { $('warnKeep').focus(); } catch (e) {} }, 40);
+    });
   }
 
   function barStyle(b) {
@@ -875,15 +942,14 @@ function initUI() {
       return;
     }
 
-    // Nudge people who picked a single block: matching is much easier with more.
-    if (!state.cantMake && onBlocks.length === 1 && !state.confirmSingle) {
-      state.confirmSingle = true;
-      const btn0 = $('saveBtn');
-      btn0.dataset.warn = '1';
-      btn0.textContent = 'Save anyway';
-      $('saveMsg').className = 'msg warn';
-      $('saveMsg').textContent = 'Only one time block picked. It is much easier to find a time that works for everyone when people pick as many blocks as they could possibly do — even the days you are only maybe free. Tap "Save anyway" to submit just this one.';
-      return;
+    // Warn (loudly) when someone picks a single block: matching is much easier with more.
+    if (!state.cantMake && onBlocks.length === 1) {
+      const ok = await confirmSingleBlock();
+      if (!ok) {
+        $('saveMsg').className = 'msg';
+        $('saveMsg').textContent = '';
+        return;
+      }
     }
 
     const btn = $('saveBtn');
@@ -920,9 +986,7 @@ function initUI() {
         '. Your picks are kept in this browser — try again.';
     } finally {
       btn.disabled = false;
-      btn.dataset.warn = '0';
       btn.textContent = 'Save my availability';
-      state.confirmSingle = false;
     }
   }
 
